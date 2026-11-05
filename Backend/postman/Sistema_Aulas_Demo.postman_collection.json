@@ -1,0 +1,331 @@
+{
+  "info": {
+    "name": "Sistema Aulas - Demo",
+    "description": "Coleccion para demostracion de autenticacion, seguridad y endpoints del panel.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "8a2f1ee8-74ff-4ad2-9f8d-3c31a2a9f001"
+  },
+  "item": [
+    {
+      "name": "00 - Salud",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Verifica que el backend este levantado."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "Login OK",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@demo.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesion y guarda token + usuario en variables de entorno."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const data = pm.response.json();",
+                  "if (data.token) pm.environment.set('token', data.token);",
+                  "if (data.user) {",
+                  "  pm.environment.set('idUsuario', String(data.user.id_usuario || ''));",
+                  "  const fullName = [data.user.nombres, data.user.apellidos].filter(Boolean).join(' ').trim();",
+                  "  pm.environment.set('nombreUsuario', fullName || data.user.email || 'Usuario');",
+                  "}",
+                  "",
+                  "pm.test('Token guardado', function () {",
+                  "  pm.expect(pm.environment.get('token')).to.be.a('string').and.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Login Invalido (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"correo@invalido.com\",\n  \"password\": \"wrong-pass\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Prueba de error de autenticacion para exponer control de credenciales."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revoca token en sesion_jwt."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.environment.unset('token');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Panel (Protegido)",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{token}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Docentes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/docentes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "docentes"
+              ]
+            },
+            "description": "Lista docentes para la tabla de busqueda del panel."
+          },
+          "response": []
+        },
+        {
+          "name": "Horarios de Docente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/docentes/{{idDocente}}/horarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "docentes",
+                "{{idDocente}}",
+                "horarios"
+              ]
+            },
+            "description": "Obtiene horario global por docente."
+          },
+          "response": []
+        },
+        {
+          "name": "Aulas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/infraestructura/aulas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "infraestructura",
+                "aulas"
+              ]
+            },
+            "description": "Lista aulas para el bloque de disponibilidad."
+          },
+          "response": []
+        },
+        {
+          "name": "Disponibilidad Aula x Periodo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/horarios/disponibilidad/{{idAula}}/{{idPeriodo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "horarios",
+                "disponibilidad",
+                "{{idAula}}",
+                "{{idPeriodo}}"
+              ]
+            },
+            "description": "Matriz de disponibilidad dia x bloque de un aula."
+          },
+          "response": []
+        },
+        {
+          "name": "Periodo Activo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/academico/periodos/activo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "academico",
+                "periodos",
+                "activo"
+              ]
+            },
+            "description": "Obtiene periodo academico activo."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Seguridad",
+      "item": [
+        {
+          "name": "Sin Token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/docentes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "docentes"
+              ]
+            },
+            "description": "Debe responder 401 cuando no se envia JWT."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ]
+}

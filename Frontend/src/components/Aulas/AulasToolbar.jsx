@@ -1,0 +1,6 @@
+import React from 'react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
+
+export default function AulasToolbar({ pabellones, pisos, selectedPabellon, selectedPiso, search, onPabellonChange, onPisoChange, onSearch }) {
+  return <section className="aulas-toolbar"><div className="aulas-pavilion-tabs">{pabellones.map((pabellon) => <button className={selectedPabellon === String(pabellon.id_pabellon) ? 'active' : ''} key={pabellon.id_pabellon} onClick={() => onPabellonChange(String(pabellon.id_pabellon))}>{pabellon.nombre_pabellon}<small>{pabellon.nombre_facultad || 'Campus'}</small></button>)}</div><div className="aulas-filter-row"><label className="aulas-search"><Search size={17} /><input value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar aula por código, capacidad o equipamiento..." />{search && <button onClick={() => onSearch('')}><X size={15} /></button>}</label><label className="aulas-floor"><SlidersHorizontal size={15} />Nivel<select value={selectedPiso} onChange={(event) => onPisoChange(event.target.value)}><option value="">Todos los pisos</option>{pisos.map((piso) => <option value={piso.numero_piso} key={piso.id_piso}>{piso.descripcion || `Piso ${piso.numero_piso}`}</option>)}</select></label></div></section>;
+}

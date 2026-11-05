@@ -1,0 +1,202 @@
+/* src/components/Login/Login.css */
+
+.login-page-bg {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Matching the deep blue gradient from the image */
+  background: linear-gradient(135deg, #71a5e8 0%, #3a7bd5 40%, #002b66 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+
+.login-glass-box {
+  width: 100%;
+  max-width: 400px;
+  /* Frosted glass effect */
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-system-title-wrap {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 1.4rem;
+}
+
+.login-system-kicker {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.login-system-title {
+  margin: 0.35rem 0 0;
+  color: #ffffff;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+.login-header-simple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.user-icon-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #0b3d91; /* Dark blue circle */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.login-header-simple h2 {
+  color: #ffffff;
+  font-weight: 300;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.login-error-message {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  text-align: center;
+}
+
+.login-form-transparent {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-line-group {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 0.5rem 0;
+  transition: border-color 0.3s;
+}
+
+.input-line-group:focus-within {
+  border-bottom: 1px solid #ffffff;
+}
+
+.input-line-icon {
+  color: #ffffff;
+  margin-right: 1rem;
+  opacity: 0.9;
+}
+
+.input-line-group input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1rem;
+  padding: 0.5rem 0;
+}
+
+.input-line-group input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 300;
+}
+
+/* Fix autofill background in webkit browsers */
+.input-line-group input:-webkit-autofill,
+.input-line-group input:-webkit-autofill:hover, 
+.input-line-group input:-webkit-autofill:focus, 
+.input-line-group input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.forgot-link {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  text-decoration: none;
+  font-style: italic;
+  transition: color 0.3s;
+}
+
+.forgot-link:hover {
+  color: #ffffff;
+}
+
+.login-solid-btn {
+  background-color: #0b3d91; /* Dark solid blue */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-solid-btn:hover {
+  background-color: #092f70;
+}
+
+.login-solid-btn:active {
+  transform: scale(0.98);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
