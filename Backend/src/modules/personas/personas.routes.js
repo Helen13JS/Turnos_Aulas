@@ -18,6 +18,7 @@ router.get('/estados-usuario',  verifyToken, ctrl.getAllEstadosUsuario);
 router.get('/docentes',              verifyToken, ctrl.getAllDocentes);
 router.post('/docentes',             verifyToken, privateRecords, ctrl.createDocente);
 router.get('/docentes/:id',          verifyToken, ctrl.getDocenteById);
+router.put('/docentes/:id', verifyToken, verifyRole([ROLE_SUPER_ADMIN]), ctrl.updateDocente);
 router.get('/docentes/:id/carreras', verifyToken, ctrl.getCarrerasDocente);
 router.get('/docentes/:id/horarios', verifyToken, ctrl.getHorariosDocente);
 

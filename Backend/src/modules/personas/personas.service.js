@@ -2,7 +2,7 @@ const { PERIODO_ACTIVO_SQL } = require('../../utils/periodoActivo');
 // src/modules/personas/personas.service.js
 const db = require('../../config/db');
 const { ROLE_SUPER_ADMIN, ROLE_DIRECTOR_CARRERA } = require('../../utils/roles');
-const { httpError } = require('../../utils/domainValidation');
+const { httpError, positiveId } = require('../../utils/domainValidation');
 function studentScope(user) {
   if (user?.rol === ROLE_SUPER_ADMIN) return null;
   if (user?.rol !== ROLE_DIRECTOR_CARRERA) throw httpError(403, 'Sin permiso para consultar expedientes');
@@ -25,7 +25,7 @@ async function assertStudent(id, user) {
 async function getAllDocentes(user) {
   const isPrivileged = [ROLE_SUPER_ADMIN, ROLE_DIRECTOR_CARRERA].includes(user?.rol);
   const { rows } = await db.query(`
-    SELECT d.id_docente,
+    SELECT d.id_docente, d.id_tipo_contrato, d.activo,
            p.nombres, p.apellidos, ${isPrivileged ? 'p.nro_documento,' : ''}
            tc.nombre_contrato
     FROM docente d
@@ -40,7 +40,7 @@ async function getDocenteById(id, user) {
   const isPrivileged = [ROLE_SUPER_ADMIN, ROLE_DIRECTOR_CARRERA].includes(user?.rol);
   if (!isPrivileged) {
     const {rows} = await db.query(`
-      SELECT d.id_docente, d.id_tipo_contrato,
+      SELECT d.id_docente, d.id_tipo_contrato, d.activo,
              p.nombres, p.apellidos,
              tc.nombre_contrato
       FROM docente d
@@ -51,7 +51,7 @@ async function getDocenteById(id, user) {
     return rows[0] || null;
   }
   const { rows } = await db.query(`
-    SELECT d.id_docente, d.id_tipo_contrato,
+    SELECT d.id_docente, d.id_tipo_contrato, d.activo,
            p.id_persona, p.nombres, p.apellidos, p.nro_documento,
            p.fecha_nacimiento,
            td.sigla AS tipo_doc, td.nombre_documento,
@@ -65,6 +65,31 @@ async function getDocenteById(id, user) {
     WHERE d.id_docente = $1
   `, [id]);
   return rows[0] || null;
+}
+
+async function updateDocente(id, { nombres, apellidos, id_tipo_contrato, activo }) {
+  id = positiveId(id, 'docente');
+  id_tipo_contrato = positiveId(id_tipo_contrato, 'tipo de contrato');
+  if (typeof nombres !== 'string' || !nombres.trim() || typeof apellidos !== 'string' || !apellidos.trim()) {
+    throw httpError(400, 'Nombres y apellidos son obligatorios');
+  }
+  if (typeof activo !== 'boolean') throw httpError(400, 'El estado debe ser activo o inactivo');
+  if (nombres.trim().length > 100 || apellidos.trim().length > 100) throw httpError(400, 'Nombres y apellidos admiten hasta 100 caracteres');
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query('SELECT id_persona FROM docente WHERE id_docente=$1 FOR UPDATE', [id]);
+    if (!rows.length) throw httpError(404, 'Docente no encontrado');
+    const contrato = await client.query('SELECT 1 FROM tipo_contrato WHERE id_tipo_contrato=$1', [id_tipo_contrato]);
+    if (!contrato.rowCount) throw httpError(400, 'Tipo de contrato inexistente');
+    await client.query('UPDATE persona SET nombres=$1, apellidos=$2 WHERE id_persona=$3', [nombres.trim(), apellidos.trim(), rows[0].id_persona]);
+    await client.query('UPDATE docente SET id_tipo_contrato=$1, activo=$2 WHERE id_docente=$3', [id_tipo_contrato, activo, id]);
+    await client.query('COMMIT');
+    return { id_docente: id, nombres: nombres.trim(), apellidos: apellidos.trim(), id_tipo_contrato, activo };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally { client.release(); }
 }
 
 async function createDocente({ id_tipo_doc, id_nacionalidad, nro_documento, nombres, apellidos, fecha_nacimiento, id_tipo_contrato }) {
@@ -263,6 +288,7 @@ async function getAllEstadosUsuario() {
 }
 
 module.exports = {
+  updateDocente,
   // Docentes
   getAllDocentes, getDocenteById, createDocente, getCarrerasDocente, getHorariosDocente,
   // Estudiantes

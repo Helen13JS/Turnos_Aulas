@@ -269,7 +269,7 @@ function CarrerasTab({ carreras, planesByCarrera, onCreate, onPlanCreate, onView
         description="Gestión de carreras, modalidad académica y planes de estudio asociados."
         action="Nueva Carrera"
         onAction={onCreate}
-        secondary={{ label: 'Exportar Catálogo', onClick: () => window.print() }}
+
       />
       <div className="career-grid">
         {carreras.length === 0 ? <EmptyState text="No hay carreras registradas." /> : carreras.map((career, index) => {
@@ -327,9 +327,6 @@ function CarrerasTab({ carreras, planesByCarrera, onCreate, onPlanCreate, onView
           <h3>Estructura Curricular Institucional</h3>
           <p>Parámetros globales aplicados a las carreras de la Universidad.</p>
         </div>
-        <button className="button button-dark" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} title="Módulo de versionado curricular en desarrollo para la siguiente versión">
-          Histórico de Versiones (Próximamente)
-        </button>
         <div className="summary-grid">
           <Summary label="Régimen Académico" value="Semestral Regular" note="2 períodos por año lectivo" />
           <Summary label="Carga Horaria Promedio" value="Configurada por materia" note="Teoría, laboratorio y práctica" />
@@ -443,9 +440,11 @@ function DocentesTab({ docentes, onRefresh }) {
   const emptyForm = { id_tipo_doc: '', id_nacionalidad: '', nro_documento: '', nombres: '', apellidos: '', fecha_nacimiento: '', id_tipo_contrato: '' };
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [catalogs, setCatalogs] = useState({ tipos: [], nacionalidades: [], contratos: [] });
   const [saving, setSaving] = useState(false);
+  const [loadingCatalogs, setLoadingCatalogs] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -453,10 +452,13 @@ function DocentesTab({ docentes, onRefresh }) {
     `${docente.nombres || ''} ${docente.apellidos || ''} ${docente.nro_documento || ''} ${docente.nombre_contrato || ''}`.toLowerCase().includes(query.toLowerCase())
   );
 
-  const openModal = async () => {
+  const openModal = async (docente = null) => {
+    setEditingId(docente?.id_docente || null);
+    setForm(docente?.id_docente ? { ...emptyForm, ...docente } : emptyForm);
     setError('');
     setNotice('');
     setOpen(true);
+    setLoadingCatalogs(true);
     try {
       const [tipos, nacionalidades, contratos] = await Promise.all([
         apiService.getTiposDocumento(),
@@ -470,7 +472,7 @@ function DocentesTab({ docentes, onRefresh }) {
       });
     } catch (requestError) {
       setError(requestError.message || 'No se pudieron cargar los catálogos del formulario.');
-    }
+    } finally { setLoadingCatalogs(false); }
   };
 
   const update = (field, value) => setForm((previous) => ({ ...previous, [field]: value }));
@@ -480,7 +482,13 @@ function DocentesTab({ docentes, onRefresh }) {
     setError('');
     setNotice('');
     try {
-      await apiService.crearDocente({
+      if (editingId) await apiService.actualizarDocente(editingId, {
+        nombres: form.nombres,
+        apellidos: form.apellidos,
+        id_tipo_contrato: Number(form.id_tipo_contrato),
+        activo: form.activo
+      });
+      else await apiService.crearDocente({
         ...form,
         id_tipo_doc: Number(form.id_tipo_doc),
         id_nacionalidad: Number(form.id_nacionalidad),
@@ -488,10 +496,10 @@ function DocentesTab({ docentes, onRefresh }) {
       });
       setForm(emptyForm);
       setOpen(false);
-      setNotice('Docente registrado correctamente.');
+      setNotice(editingId ? 'Docente actualizado correctamente.' : 'Docente registrado correctamente.');
       await onRefresh();
     } catch (requestError) {
-      setError(requestError.message || 'No se pudo registrar el docente.');
+      setError(requestError.message || 'No se pudo guardar el docente.');
     } finally {
       setSaving(false);
     }
@@ -500,10 +508,10 @@ function DocentesTab({ docentes, onRefresh }) {
   return (
     <section className="academic-tab">
       <div className="filter-panel">
-        <TabHeader title="Directorio de Personal y Docentes" description="Consulta y registra personal docente con datos reales del sistema." action="Nuevo registro" onAction={openModal} />
+        <TabHeader title="Directorio de Personal y Docentes" description="Consulta y gestiona los datos del personal docente." action="Nuevo registro" onAction={() => openModal()} />
         <label className="directory-search">
           <Search size={16} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre, CI, correo o contrato..." />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre, CI o contrato..." />
         </label>
         {notice && <div className="academic-notice">{notice}</div>}
       </div>
@@ -516,27 +524,27 @@ function DocentesTab({ docentes, onRefresh }) {
               <div>
                 <h3>{name}</h3>
                 <p>{docente.nro_documento || 'CI no registrado'} · {docente.nombre_contrato || 'Contrato no registrado'}</p>
-                <span className="status success"><i />Activo</span>
+                <span className={`status ${docente.activo ? 'success' : 'neutral'}`}><i />{docente.activo ? 'Activo' : 'Inactivo'}</span>
               </div>
-              <button className="icon-button" disabled={!canManage} onClick={openModal} title="Registrar otro docente">
+              {canManage && <button className="icon-button" onClick={() => openModal(docente)} title={`Editar a ${name}`} aria-label={`Editar a ${name}`}>
                 <ChevronRight size={16} />
-              </button>
+              </button>}
             </article>
           );
         })}
       </div>
       {open && (
         <div className="academic-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setOpen(false); }}>
-          <form className="academic-modal" onSubmit={submit}>
+          <form className="academic-modal" role="dialog" aria-modal="true" aria-labelledby="docente-modal-title" onSubmit={submit}>
             <div className="academic-modal-header">
-              <div><h2>Registrar Docente</h2><p>Los datos se guardarán en la base institucional.</p></div>
-              <button type="button" onClick={() => setOpen(false)} disabled={saving}><X size={18} /></button>
+              <div><h2 id="docente-modal-title">{editingId ? 'Editar Docente' : 'Registrar Docente'}</h2><p>Los datos se guardarán en la base institucional.</p></div>
+              <button type="button" aria-label="Cerrar" onClick={() => setOpen(false)} disabled={saving}><X size={18} /></button>
             </div>
             {error && <div className="academic-error"><AlertCircle size={16} />{error}</div>}
             <div className="academic-form-grid">
-              <label>Nombres<input required value={form.nombres} onChange={(event) => update('nombres', event.target.value)} /></label>
-              <label>Apellidos<input required value={form.apellidos} onChange={(event) => update('apellidos', event.target.value)} /></label>
-              <label>Número de documento<input required value={form.nro_documento} onChange={(event) => update('nro_documento', event.target.value)} /></label>
+              <label>Nombres<input required maxLength={100} value={form.nombres} onChange={(event) => update('nombres', event.target.value)} /></label>
+              <label>Apellidos<input required maxLength={100} value={form.apellidos} onChange={(event) => update('apellidos', event.target.value)} /></label>
+              {!editingId && <><label>Número de documento<input required value={form.nro_documento} onChange={(event) => update('nro_documento', event.target.value)} /></label>
               <label>Tipo de documento
                 <select required value={form.id_tipo_doc} onChange={(event) => update('id_tipo_doc', event.target.value)}>
                   <option value="">Seleccionar...</option>
@@ -549,17 +557,19 @@ function DocentesTab({ docentes, onRefresh }) {
                   {catalogs.nacionalidades.map((item) => <option value={item.id_nacionalidad} key={item.id_nacionalidad}>{item.nombre_pais}</option>)}
                 </select>
               </label>
+              </>}
               <label>Tipo de contrato
                 <select required value={form.id_tipo_contrato} onChange={(event) => update('id_tipo_contrato', event.target.value)}>
                   <option value="">Seleccionar...</option>
                   {catalogs.contratos.map((item) => <option value={item.id_tipo_contrato} key={item.id_tipo_contrato}>{item.nombre_contrato}</option>)}
                 </select>
               </label>
-              <label>Fecha de nacimiento<input type="date" value={form.fecha_nacimiento} onChange={(event) => update('fecha_nacimiento', event.target.value)} /></label>
+              {!editingId && <label>Fecha de nacimiento<input type="date" value={form.fecha_nacimiento} onChange={(event) => update('fecha_nacimiento', event.target.value)} /></label>}
+              {editingId && <label>Estado del docente<select value={String(form.activo)} onChange={(event) => update('activo', event.target.value === 'true')}><option value="true">Activo</option><option value="false">Inactivo</option></select></label>}
             </div>
             <div className="academic-modal-actions">
               <button type="button" className="button button-light" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
-              <button type="submit" className="button button-primary" disabled={saving}>
+              <button type="submit" className="button button-primary" disabled={saving || loadingCatalogs || !catalogs.contratos.length}>
                 {saving && <Loader2 size={15} className="spin" />}
                 {saving ? 'Guardando...' : 'Guardar docente'}
               </button>

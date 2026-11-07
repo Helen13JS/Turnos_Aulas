@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Eye, EyeOff, Laptop, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Laptop, LockKeyhole, ShieldCheck } from 'lucide-react';
 
 export default function TabSeguridad({ user, onChangePassword }) {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -98,47 +98,20 @@ export default function TabSeguridad({ user, onChangePassword }) {
           </button>
         </form>
       </section>
-
-      {/* ─── Tarjeta 2: Seguridad Institucional y 2FA (Blindada) ─── */}
       <section className="config-card security-advanced">
         <div className="config-card-heading compact">
           <div className="config-heading-icon green">
             <ShieldCheck size={20} />
           </div>
           <div>
-            <h2>Seguridad Institucional y 2FA</h2>
+            <h2>Seguridad de la sesión</h2>
             <p>Estado de autenticación, sesión activa y verificación.</p>
           </div>
-        </div>
-
-        <div className="two-factor">
-          <div className="two-factor-title">
-            <span>
-              <CheckCircle2 size={18} />
-              <strong>
-                Autenticación en Dos Pasos (2FA){' '}
-                <small style={{ color: '#64748b', fontWeight: 'normal' }}>(Próximamente)</small>
-              </strong>
-            </span>
-            <button
-              className="config-switch"
-              disabled
-              style={{ opacity: 0.5, cursor: 'not-allowed' }}
-              title="Próximamente: Integración con TOTP / Google Authenticator"
-              aria-label="Activar autenticación de dos pasos (Próximamente)"
-            >
-              <i />
-            </button>
-          </div>
-          <p>
-            La verificación mediante segundo factor TOTP (Google Authenticator / Authy) estará disponible en la siguiente fase de actualización institucional.
-          </p>
         </div>
 
         <div className="sessions">
           <div>
             <h3>Sesión Actual</h3>
-            <span>1 sesión conectada</span>
           </div>
           <div className="session-item">
             <Laptop size={18} />
@@ -148,15 +121,6 @@ export default function TabSeguridad({ user, onChangePassword }) {
             </div>
           </div>
         </div>
-
-        <button
-          className="config-secondary-button full-width"
-          disabled
-          style={{ opacity: 0.6, cursor: 'not-allowed' }}
-          title="Próximamente: Revocación masiva de sesiones remotas"
-        >
-          Cerrar todas las demás sesiones (Próximamente)
-        </button>
       </section>
     </div>
   );

@@ -2,6 +2,10 @@
 const svc = require('./personas.service');
 
 module.exports = {
+  async updateDocente(req, res, next) {
+    try { res.json({ docente: await svc.updateDocente(req.params.id, req.body) }); }
+    catch (err) { next(err); }
+  },
   // ─── Docentes ───
   async getAllDocentes(req, res, next) {
     try { res.json({ docentes: await svc.getAllDocentes(req.user) }); }

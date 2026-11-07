@@ -22,6 +22,10 @@ const handleResponse = async (response) => {
 };
 
 export const apiService = {
+  async actualizarDocente(id, docente) {
+    const res = await fetch(`${API_URL}/personas/docentes/${id}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(docente) });
+    return handleResponse(res);
+  },
   // ═══════════════ PERSONAS ═══════════════
   async getDocentes() {
     const res = await fetch(`${API_URL}/personas/docentes`, { headers: getHeaders() });
